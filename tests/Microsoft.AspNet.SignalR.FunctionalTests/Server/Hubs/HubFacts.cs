@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
+using System.Net;
 using System.Security.Principal;
 using System.Threading;
 using System.Threading.Tasks;
@@ -14,6 +15,7 @@ using Microsoft.AspNet.SignalR.Tests.Common;
 using Microsoft.AspNet.SignalR.Tests.Common.Infrastructure;
 using Microsoft.AspNet.SignalR.Tests.Infrastructure;
 using Microsoft.AspNet.SignalR.Tests.Utilities;
+using Microsoft.Owin.Hosting; 
 using Moq;
 using Newtonsoft.Json.Linq;
 using Owin;
@@ -24,6 +26,27 @@ namespace Microsoft.AspNet.SignalR.Tests
 {
     public class HubFacts : HostedTest
     {
+        [Fact]
+        public async Task Test()
+        {
+            Action<IAppBuilder> configure = app =>
+            {
+                HttpListener listener = (HttpListener)app.Properties["System.Net.HttpListener"];
+                listener.AuthenticationSchemes = AuthenticationSchemes.IntegratedWindowsAuthentication;
+
+                app.MapSignalR(new HubConfiguration() { Resolver = new DefaultDependencyResolver() });
+            };
+
+            var url = "http://localhost:8000";
+
+            using (WebApp.Start(url, configure))
+            using (var connection = new HubConnection(url))
+            {
+                connection.Credentials = CredentialCache.DefaultCredentials;
+                await connection.Start(new Client.Transports.WebSocketTransport());
+            }
+        }
+
         [Theory]
         [InlineData(HostType.Memory, TransportType.ServerSentEvents, MessageBusType.Default)]
         [InlineData(HostType.Memory, TransportType.ServerSentEvents, MessageBusType.Fake)]
