@@ -62,6 +62,7 @@ namespace Microsoft.AspNet.SignalR.Tests.Common.Infrastructure
                     host = new OwinTestHost(Path.Combine(logBasePath, testName));
                     host.TransportFactory = () => CreateTransport(transportType);
                     host.Transport = host.TransportFactory();
+                    Console.WriteLine("HttpListener url: {0}", host.Url);
                     break;
             }
 
